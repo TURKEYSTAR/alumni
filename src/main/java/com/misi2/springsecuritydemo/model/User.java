@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
@@ -20,17 +18,19 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String username;
     private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @OneToMany(mappedBy = "assignedTo")
-    private List<Task> assignedTasks;
-
     // OAuth2 fields
     private String provider; // LOCAL, GOOGLE, etc.
     private String providerId; // Google user ID
 
+    // Lien avec Alumni (pour les utilisateurs de type ALUMNI)
+    @OneToOne
+    @JoinColumn(name = "alumni_id")
+    private Alumni alumni;
 }

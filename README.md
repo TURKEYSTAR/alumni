@@ -1,329 +1,188 @@
-# 🔐 Spring Security Demo - Gestion des Rôles et OAuth2
+# 🎓 Plateforme de Gestion des Alumni ESMT
 
-Application de démonstration Spring Boot illustrant l'authentification multi-méthodes (formulaire + OAuth2/OIDC) avec gestion des rôles et permissions granulaires.
+Application Spring Boot pour la gestion et le suivi des anciens étudiants de l'ESMT (École Supérieure Multinationale des Télécommunications).
 
-## 📋 Table des matières
+## 📋 Fonctionnalités
 
-- [Fonctionnalités](#-fonctionnalités)
-- [Architecture](#-architecture)
-- [Technologies](#-technologies)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Utilisation](#-utilisation)
-- [Structure du projet](#-structure-du-projet)
-- [Sécurité](#-sécurité)
+### Espace Administrateur
+- 📊 **Dashboard avec statistiques** : Graphiques interactifs (Chart.js)
+    - Nombre total d'alumni
+    - Répartition par promotion
+    - Évolution par année de soutenance
+    - Statistiques de situation professionnelle
+- 👥 **Gestion complète des alumni** : CRUD (Create, Read, Update, Delete)
+- 🔍 **Vue détaillée** de chaque alumni
+- ➕ **Création automatique de comptes** pour les alumni
 
-## ✨ Fonctionnalités
+### Espace Alumni
+- 👤 **Profil personnel** avec toutes les informations
+- ✏️ **Modification du profil** (informations professionnelles)
+- 📱 **Interface responsive** et moderne
 
-### Authentification Multi-Méthodes
-- **Formulaire classique** : Username/Password avec BCrypt
-- **OAuth2/OIDC** : Connexion avec Google
-- **Redirection intelligente** : Selon le rôle après login
+## 🔐 Système d'authentification
 
-### Gestion des Rôles
+### Connexion Alumni
+- **Login** : Matricule (ex: ALU2020001)
+- **Mot de passe** : Promotion (ex: 2020)
 
-#### 👑 ADMIN
-- Gestion complète des utilisateurs (CRUD)
-- Modification des rôles
-- Dashboard avec statistiques système
-- Suppression de toutes les tâches
-- Accès à toutes les fonctionnalités
+### Connexion Admin
+- **Login** : admin
+- **Mot de passe** : admin123
 
-#### 👔 GÉRANT (Manager)
-- Création et assignation de tâches
-- Réassignation de tâches
-- Modification du statut de toutes les tâches
-- Vue globale de tous les projets
+### OAuth2 (Optionnel)
+- Connexion avec Google (nécessite configuration)
 
-#### 👤 USER
-- Vue de ses propres tâches uniquement
-- Modification du statut de ses tâches
-- Marquage des tâches comme complétées
+## 🛠️ Technologies utilisées
 
-### Interface Utilisateur
-- **Dashboard Admin** : Statistiques (utilisateurs, tâches)
-- **Gestion des tâches** : Modal de création, filtres par statut/assignation
-- **Gestion des utilisateurs** : Édition inline des rôles
-- **Navigation contextuelle** : Liens adaptés selon le rôle
-- **Design moderne** : Bootstrap 5 avec icônes
+- **Backend** : Spring Boot 3.x
+- **Sécurité** : Spring Security 6
+- **Base de données** : H2 (dev), MySQL/PostgreSQL (prod)
+- **ORM** : JPA/Hibernate
+- **Template** : Thymeleaf
+- **Frontend** : Bootstrap 5, Bootstrap Icons, Chart.js
+- **Build** : Maven
 
-## 🏗️ Architecture
-
-### Flux d'Authentification
+## 📦 Structure du projet
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Page de Login                            │
-│  • Formulaire (username/password)                           │
-│  • Bouton "Sign in with Google"                             │
-└─────────────────┬───────────────────────────────────────────┘
-                  │
-        ┌─────────┴─────────┐
-        │                   │
-        ▼                   ▼
-┌───────────────┐   ┌──────────────────┐
-│ Form Login    │   │ OAuth2/OIDC      │
-│               │   │ (Google)         │
-└───────┬───────┘   └────────┬─────────┘
-        │                    │
-        ▼                    ▼
-┌───────────────┐   ┌──────────────────┐
-│ UserService   │   │ OAuth2UserService│
-│ (Database)    │   │ (Google API)     │
-└───────┬───────┘   └────────┬─────────┘
-        │                    │
-        └──────────┬─────────┘
-                   │
-                   ▼
-        ┌──────────────────────┐
-        │ CustomUserDetails    │
-        │ (UserDetails +       │
-        │  OAuth2User)         │
-        └──────────┬───────────┘
-                   │
-                   ▼
-        ┌──────────────────────┐
-        │ Success Handler      │
-        │ • ADMIN → Dashboard  │
-        │ • GÉRANT → Tasks     │
-        │ • USER → Tasks       │
-        └──────────────────────┘
+src/main/java/sn/esmt/tpgestionalumni/
+├── config/              # Configuration Spring Security
+├── controller/          # Contrôleurs (Admin, Alumni)
+├── model/              # Entités (Alumni, User, Role)
+├── repository/         # Repositories JPA
+└── service/            # Services métier
+
+src/main/resources/
+├── templates/
+│   ├── admin/          # Pages admin (dashboard, liste)
+│   ├── alumni/         # Pages alumni (profil)
+│   ├── fragments/      # Fragments réutilisables
+│   └── error/          # Pages d'erreur
+└── application.properties
 ```
 
-### Composants Principaux
-
-#### Configuration
-- **`SecurityConfig`** : Configuration Spring Security (routes, providers)
-- **`AppConfig`** : Beans globaux (PasswordEncoder)
-- **`DotenvConfig`** : Chargement des variables d'environnement
-
-#### Authentification
-- **`CustomUserDetails`** : Implémente `UserDetails` + `OAuth2User`
-- **`CustomOAuth2UserService`** : Gestion des utilisateurs OAuth2
-- **`CustomAuthenticationSuccessHandler`** : Redirection post-login
-
-#### Modèles
-- **`User`** : Entité utilisateur (username, password, role, provider)
-- **`Task`** : Entité tâche (title, description, status, assignedTo)
-- **`Role`** : Enum (ROLE_ADMIN, ROLE_GERANT, ROLE_USER)
-- **`Status`** : Enum (TODO, IN_PROGRESS, COMPLETED, CANCELED)
-
-## 🛠️ Technologies
-
-- **Java 21**
-- **Spring Boot 3.x**
-- **Spring Security 6**
-- **Spring Data JPA**
-- **H2 Database** (développement)
-- **MySQL** (production - optionnel)
-- **Thymeleaf** (templates)
-- **Bootstrap 5** (UI)
-- **Lombok** (réduction boilerplate)
-- **Dotenv Java** (gestion variables d'environnement)
-
-## 📦 Installation
+## 🚀 Installation et démarrage
 
 ### Prérequis
-- Java 21+
-- Maven 3.8+
-- (Optionnel) MySQL 8+
+- Java 17 ou supérieur
+- Maven 3.6+
+- (Optionnel) MySQL ou PostgreSQL
 
 ### Étapes
 
 1. **Cloner le projet**
 ```bash
-git clone https://github.com/sats0264/spring-security-demo.git
-cd spring-security-demo
+git clone [URL_DU_REPO]
+cd tp-gestion-alumni
 ```
 
-2. **Créer le fichier `.env`**
+2. **Configuration de la base de données**
+
+   Par défaut, l'application utilise H2 (base en mémoire). Pour utiliser MySQL/PostgreSQL, modifiez `application.properties`.
+
+3. **Compiler et lancer**
 ```bash
-# Copier le template
-cp .env.example .env
-```
-
-3. **Configurer les credentials Google OAuth2**
-
-Créez un projet sur [Google Cloud Console](https://console.cloud.google.com/) :
-- Activez l'API Google+
-- Créez des identifiants OAuth 2.0
-- URI de redirection : `http://localhost:8080/login/oauth2/code/google`
-
-Puis ajoutez dans `.env` :
-```env
-GOOGLE_CLIENT_ID=votre-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=votre-client-secret
-```
-
-4. **Lancer l'application**
-```bash
+mvn clean install
 mvn spring-boot:run
 ```
 
-5. **Accéder à l'application**
-- URL : http://localhost:8080
-- Console H2 : http://localhost:8080/h2-console
+4. **Accéder à l'application**
+    - Application : http://localhost:8080
+    - Console H2 : http://localhost:8080/h2-console
+        - JDBC URL: `jdbc:h2:mem:alumnidb`
+        - Username: `sa`
+        - Password: `password`
 
-## ⚙️ Configuration
+## 👥 Comptes de test
 
-### Base de données
+L'application initialise automatiquement des données de test :
 
-#### H2 (par défaut - développement)
-```properties
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.username=sa
-spring.datasource.password=password
-spring.h2.console.enabled=true
-```
+### Admin
+- Login: **admin**
+- Password: **admin123**
 
-#### MySQL (production)
-Décommentez dans `application.properties` :
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/spring_security_demo
-spring.datasource.username=root
-spring.datasource.password=votre-password
-spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
-```
+### Alumni (exemples)
+| Matricule    | Promotion | Nom          |
+|-------------|-----------|--------------|
+| ALU2020001  | 2020      | DIOP Amadou  |
+| ALU2021002  | 2021      | NDIAYE Fatou |
+| ALU2022003  | 2022      | FALL Moussa  |
+| ALU2023004  | 2023      | SOW Aïssatou |
 
-### OAuth2 / OIDC
+## 📊 Modèle de données Alumni
 
-Configuration dans `application.properties` :
-```properties
-spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID}
-spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET}
-spring.security.oauth2.client.registration.google.scope=profile,email
-spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
-```
-
-### Utilisateurs par défaut
-
-L'application initialise automatiquement 3 utilisateurs :
-
-| Username | Password | Rôle     |
-|----------|----------|----------|
-| admin    | password | ADMIN    |
-| gerant   | password | GÉRANT   |
-| user     | password | USER     |
-
-## 🚀 Utilisation
-
-### Connexion
-
-#### Formulaire
-1. Accédez à http://localhost:8080
-2. Utilisez un des comptes par défaut (ex: `admin` / `password`)
-3. Vous serez redirigé selon votre rôle
-
-#### Google OAuth2
-1. Cliquez sur "Sign in with Google"
-2. Authentifiez-vous avec votre compte Google
-3. Un compte USER sera créé automatiquement avec votre email
-
-### Fonctionnalités par rôle
-
-#### ADMIN
-- **Dashboard** : `/admin/dashboard` - Statistiques système
-- **Gestion utilisateurs** : `/admin/users` - CRUD complet
-- **Gestion tâches** : `/tasks` - Vue complète + suppression
-
-#### GÉRANT
-- **Gestion tâches** : `/tasks` - Création, réassignation, modification statut
-
-#### USER
-- **Mes tâches** : `/tasks` - Vue personnelle, modification statut
-
-### Gestion des tâches
-
-1. **Créer une tâche** (ADMIN/GÉRANT)
-   - Cliquez sur "Create New Task"
-   - Remplissez le formulaire (titre, description, assignation)
-
-2. **Filtrer les tâches**
-   - Par statut : TODO, IN_PROGRESS, COMPLETED, CANCELED
-   - Par assignation : Sélectionnez un utilisateur
-
-3. **Modifier le statut**
-   - Cliquez sur "Start" (TODO → IN_PROGRESS)
-   - Cliquez sur "Complete" (→ COMPLETED)
-
-4. **Réassigner** (ADMIN/GÉRANT)
-   - Sélectionnez un utilisateur dans le dropdown "Reassign"
-
-## 📁 Structure du projet
-
-```
-spring-security-demo/
-├── src/main/java/com/misi2/springsecuritydemo/
-│   ├── config/
-│   │   ├── AppConfig.java                    # Beans globaux (PasswordEncoder)
-│   │   ├── SecurityConfig.java               # Configuration Spring Security
-│   │   ├── DotenvConfig.java                 # Chargement .env
-│   │   ├── CustomUserDetails.java            # UserDetails + OAuth2User
-│   │   ├── CustomOAuth2UserService.java      # Service OAuth2
-│   │   ├── CustomAuthenticationSuccessHandler.java  # Redirection post-login
-│   │   └── DataInitializer.java              # Données initiales
-│   ├── controller/
-│   │   ├── AdminController.java              # Routes admin
-│   │   ├── TaskController.java               # Routes tâches
-│   │   └── HomeController.java               # Routes publiques
-│   ├── model/
-│   │   ├── User.java                         # Entité utilisateur
-│   │   ├── Task.java                         # Entité tâche
-│   │   ├── Role.java                         # Enum rôles
-│   │   └── Status.java                       # Enum statuts
-│   ├── repository/
-│   │   ├── UserRepository.java               # DAO utilisateurs
-│   │   └── TaskRepository.java               # DAO tâches
-│   └── service/
-│       ├── UserService.java                  # Service utilisateurs
-│       ├── TaskService.java                  # Service tâches
-│       └── MyUserDetailsService.java         # UserDetailsService
-├── src/main/resources/
-│   ├── templates/
-│   │   ├── fragments/
-│   │   │   └── layout.html                   # Layout commun (navbar, etc.)
-│   │   ├── admin/
-│   │   │   ├── dashboard.html                # Dashboard admin
-│   │   │   └── users.html                    # Gestion utilisateurs
-│   │   ├── tasks/
-│   │   │   └── list.html                     # Liste des tâches
-│   │   ├── home.html                         # Page d'accueil
-│   │   └── login.html                        # Page de login
-│   ├── application.properties                # Configuration Spring
-│   └── META-INF/
-│       └── spring.factories                  # Enregistrement DotenvConfig
-├── .env                                      # Variables d'environnement (non versionné)
-├── .gitignore                                # Fichiers ignorés par Git
-├── pom.xml                                   # Dépendances Maven
-└── README.md                                 # Ce fichier
+```java
+@Entity
+public class Alumni {
+    private Long id;
+    private String matricule;        // Unique, utilisé comme login
+    private String nom;
+    private String prenom;
+    private String diplomeSortie;
+    private Integer anneeSoutenance;
+    private String sujetMemoire;
+    private String sexe;             // M/F
+    private String nationalite;
+    private String situationProfessionnelle; // En poste/Entrepreneur/En recherche
+    private String promotion;        // Utilisé comme mot de passe
+}
 ```
 
 ## 🔒 Sécurité
 
-### Bonnes pratiques implémentées
+- **Authentification** : Form-based + OAuth2 (Google)
+- **Autorisation** : Role-Based Access Control (RBAC)
+    - `ROLE_ADMIN` : Accès complet
+    - `ROLE_ALUMNI` : Accès au profil uniquement
+- **Mot de passe** : Encodage BCrypt
+- **CSRF** : Désactivé (demo) - À activer en production
 
-✅ **Mots de passe hashés** : BCrypt avec salt automatique  
-✅ **Variables d'environnement** : Credentials dans `.env` (non versionné)  
-✅ **Protection CSRF** : Désactivée pour démo (à réactiver en production)  
-✅ **Validation OAuth2** : Tokens validés par Spring Security  
-✅ **Autorisation granulaire** : `@PreAuthorize` sur les endpoints  
-✅ **Session management** : Gérée par Spring Security  
+## 🎨 Captures d'écran
 
-### Points d'attention pour la production
+### Dashboard Admin
+- Statistiques en temps réel
+- Graphiques interactifs (barres, ligne, donut)
+- Cartes de synthèse
 
-⚠️ **Réactiver CSRF** : Modifier `SecurityConfig.java`
-```java
-http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
-```
+### Liste des Alumni
+- Tableau filtrable
+- Actions CRUD
+- Modals pour création/édition
 
-## 📝 Licence
+### Profil Alumni
+- Vue complète du parcours
+- Modification des informations
+- Design moderne et responsive
 
-Ce projet est à des fins de démonstration et d'apprentissage.
+## 📝 Améliorations possibles
+
+- [ ] Export des données (Excel, PDF)
+- [ ] Recherche avancée et filtres
+- [ ] Envoi d'emails aux alumni
+- [ ] Gestion des promotions
+- [ ] API REST pour intégrations
+- [ ] Upload de photos de profil
+- [ ] Tableau de bord pour les alumni (statistiques de leur promo)
+- [ ] Forum ou messagerie interne
 
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
 
+## 📄 Licence
+
+Ce projet est sous licence MIT.
+
+## 👨‍💻 Auteur
+
+Développé dans le cadre d'un projet académique ESMT.
+
 ---
 
-**Développé avec 😃 pour démontrer Spring Security**
+**Note** : Cette application est un projet de démonstration. Pour une utilisation en production, pensez à :
+- Activer CSRF
+- Configurer OAuth2 avec vos credentials
+- Utiliser une base de données persistante
+- Ajouter des tests unitaires et d'intégration
+- Implémenter la gestion des erreurs avancée
+- Configurer HTTPS

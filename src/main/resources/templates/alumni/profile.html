@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="fr">
+<head th:replace="~{fragments/layout :: head('Mon Profil')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="bi bi-person-circle"></i> Mon Profil Alumni</h2>
+            <p class="text-muted">Informations personnelles et parcours académique</p>
+        </div>
+    </div>
+
+    <!-- Message de succès -->
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+        Profil mis à jour avec succès !
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+        <!-- Informations personnelles -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-person-badge"></i> Informations Personnelles
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle" style="font-size: 5rem; color: #0d6efd;"></i>
+                    </div>
+                    <h4 th:text="${alumni.nomComplet}">Nom Complet</h4>
+                    <p class="text-muted" th:text="${alumni.matricule}">Matricule</p>
+                    <hr>
+                    <div class="text-start">
+                        <p><strong><i class="bi bi-gender-ambiguous"></i> Sexe :</strong>
+                            <span th:text="${alumni.sexe == 'M' ? 'Masculin' : 'Féminin'}">-</span>
+                        </p>
+                        <p><strong><i class="bi bi-flag"></i> Nationalité :</strong>
+                            <span th:text="${alumni.nationalite}">-</span>
+                        </p>
+                        <p><strong><i class="bi bi-award"></i> Promotion :</strong>
+                            <span class="badge bg-primary" th:text="${alumni.promotion}">2020</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parcours académique -->
+        <div class="col-md-8 mb-4">
+            <div class="card mb-3">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-mortarboard-fill"></i> Parcours Académique
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted">Diplôme de Sortie</label>
+                            <p class="h5" th:text="${alumni.diplomeSortie}">-</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted">Année de Soutenance</label>
+                            <p class="h5" th:text="${alumni.anneeSoutenance}">-</p>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="text-muted">Sujet de Mémoire</label>
+                            <p th:text="${alumni.sujetMemoire}" class="border-start border-primary border-3 ps-3">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-briefcase-fill"></i> Situation Professionnelle
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 th:text="${alumni.situationProfessionnelle}">-</h5>
+                            <p class="text-muted mb-0">Statut actuel</p>
+                        </div>
+                        <div>
+                            <span th:text="${alumni.situationProfessionnelle}"
+                                  th:class="${'badge fs-5 ' +
+                                    (alumni.situationProfessionnelle == 'En poste' ? 'bg-success' :
+                                    (alumni.situationProfessionnelle == 'Entrepreneur' ? 'bg-warning text-dark' :
+                                    'bg-info'))}">
+                                Situation
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bouton pour modifier -->
+            <div class="mt-3">
+                <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="bi bi-pencil"></i> Modifier mon profil
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations de connexion -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-secondary">
+                <div class="card-body">
+                    <h5><i class="bi bi-info-circle"></i> Informations de Connexion</h5>
+                    <p class="mb-0">
+                        <strong>Login :</strong> <code th:text="${alumni.matricule}">Matricule</code> |
+                        <strong>Mot de passe :</strong> <code th:text="${alumni.promotion}">Promotion</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de modification -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Modifier mon Profil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/alumni/profile/update}" method="post">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Vous pouvez mettre à jour vos informations professionnelles et académiques.
+                    </div>
+                    <input type="hidden" name="id" th:value="${alumni.id}">
+                    <input type="hidden" name="matricule" th:value="${alumni.matricule}">
+                    <input type="hidden" name="promotion" th:value="${alumni.promotion}">
+                    <input type="hidden" name="nom" th:value="${alumni.nom}">
+                    <input type="hidden" name="prenom" th:value="${alumni.prenom}">
+                    <input type="hidden" name="sexe" th:value="${alumni.sexe}">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nationalité</label>
+                            <input type="text" class="form-control" name="nationalite" th:value="${alumni.nationalite}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Situation Professionnelle</label>
+                            <select class="form-select" name="situationProfessionnelle">
+                                <option value="En poste" th:selected="${alumni.situationProfessionnelle == 'En poste'}">En poste</option>
+                                <option value="Entrepreneur" th:selected="${alumni.situationProfessionnelle == 'Entrepreneur'}">Entrepreneur</option>
+                                <option value="En recherche" th:selected="${alumni.situationProfessionnelle == 'En recherche'}">En recherche</option>
+                                <option value="En formation" th:selected="${alumni.situationProfessionnelle == 'En formation'}">En formation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Diplôme de Sortie</label>
+                            <input type="text" class="form-control" name="diplomeSortie" th:value="${alumni.diplomeSortie}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Année de Soutenance</label>
+                            <input type="number" class="form-control" name="anneeSoutenance" th:value="${alumni.anneeSoutenance}">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Sujet de Mémoire</label>
+                            <textarea class="form-control" name="sujetMemoire" rows="3" th:text="${alumni.sujetMemoire}"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">Enregistrer les modifications</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

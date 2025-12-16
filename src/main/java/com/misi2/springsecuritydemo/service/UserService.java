@@ -40,18 +40,19 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
+    public User createUserForAlumni(String username, String password, Role role) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role);
+        return userRepository.save(user);
+    }
+
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
 
     public void deleteUser(Long id) {
-        User user = findById(id);
-
-        // Unassign all tasks assigned to this user
-        user.getAssignedTasks().forEach(task -> {
-            task.setAssignedTo(null);
-        });
-
         userRepository.deleteById(id);
     }
 
@@ -65,5 +66,10 @@ public class UserService implements UserDetailsService {
         user.setRole(role);
         userRepository.save(user);
     }
+
+    public User updateUser(User user) {
+        return userRepository.save(user);
+    }
+
 
 }

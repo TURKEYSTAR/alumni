@@ -34,7 +34,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     User newUser = new User();
                     newUser.setUsername(email);
                     newUser.setPassword(""); // No password for OAuth2 users
-                    newUser.setRole(Role.ROLE_USER); // Default role for OAuth2 users
+                    newUser.setRole(Role.ROLE_ADMIN); // Default role for OAuth2 users
                     newUser.setProvider(provider);
                     newUser.setProviderId(providerId);
                     return userRepository.save(newUser);

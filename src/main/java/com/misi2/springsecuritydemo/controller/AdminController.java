@@ -1,8 +1,7 @@
 package com.misi2.springsecuritydemo.controller;
 
-import com.misi2.springsecuritydemo.model.Role;
-import com.misi2.springsecuritydemo.service.TaskService;
-import com.misi2.springsecuritydemo.service.UserService;
+import com.misi2.springsecuritydemo.model.Alumni;
+import com.misi2.springsecuritydemo.service.AlumniService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,43 +12,43 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
-    private final UserService userService;
-    private final TaskService taskService;
+    private final AlumniService alumniService;
 
-    public AdminController(UserService userService, TaskService taskService) {
-        this.userService = userService;
-        this.taskService = taskService;
-    }
-
-    @GetMapping("/users")
-    public String listUsers(Model model) {
-        model.addAttribute("users", userService.findAllUsers());
-        model.addAttribute("roles", Role.values());
-        return "admin/users";
-    }
-
-    @PostMapping("/users")
-    public String createUser(@RequestParam String username, @RequestParam String password, @RequestParam Role role) {
-        userService.createUser(username, password, role);
-        return "redirect:/admin/users";
-    }
-
-    @PostMapping("/users/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return "redirect:/admin/users";
-    }
-
-    @PostMapping("/users/{id}/edit")
-    public String editUserRole(@PathVariable Long id, @RequestParam Role role) {
-        userService.updateUserRole(id, role);
-        return "redirect:/admin/users";
+    public AdminController(AlumniService alumniService) {
+        this.alumniService = alumniService;
     }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        model.addAttribute("userCount", userService.findAllUsers().size());
-        model.addAttribute("taskCount", taskService.getAllTasks().size());
+        model.addAttribute("totalAlumni", alumniService.countTotal());
+        model.addAttribute("alumniByPromotion", alumniService.getAlumniByPromotion());
+        model.addAttribute("alumniByAnnee", alumniService.getAlumniByAnnee());
+        model.addAttribute("alumniBySituation", alumniService.getAlumniBySituation());
+        model.addAttribute("alumniList", alumniService.findAllAlumni());
         return "admin/dashboard";
+    }
+
+    @PostMapping("/dashboard")
+    public String createAlumni(@ModelAttribute Alumni alumni) {
+        alumniService.createAlumni(alumni);
+        return "redirect:/admin/dashboard?success=created";
+    }
+
+    @PostMapping("/dashboard/{id}/edit")
+    public String updateAlumni(@PathVariable Long id, @ModelAttribute Alumni alumni) {
+        alumniService.updateAlumni(id, alumni);
+        return "redirect:/admin/dashboard?success=updated";
+    }
+
+    @PostMapping("/dashboard/{id}/delete")
+    public String deleteAlumni(@PathVariable Long id) {
+        alumniService.deleteAlumni(id);
+        return "redirect:/admin/dashboard?success=deleted";
+    }
+
+    @GetMapping("/alumni-detail/{id}")
+    public String viewAlumni(@PathVariable Long id, Model model) {
+        model.addAttribute("alumni", alumniService.findById(id));
+        return "admin/alumni-detail";
     }
 }

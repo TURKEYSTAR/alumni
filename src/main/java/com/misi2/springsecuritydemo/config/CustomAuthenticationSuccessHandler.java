@@ -16,7 +16,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     @Override
     @NullMarked
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-            Authentication authentication) throws IOException {
+                                        Authentication authentication) throws IOException {
 
         // Redirect based on user role
         for (GrantedAuthority authority : authentication.getAuthorities()) {
@@ -27,8 +27,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                     response.sendRedirect("/admin/dashboard");
                     return;
                 }
-                case "ROLE_GERANT", "ROLE_USER" -> {
-                    response.sendRedirect("/tasks");
+                case "ROLE_ALUMNI" -> {
+                    response.sendRedirect("/alumni/profile");
                     return;
                 }
                 case null -> {

@@ -1,40 +1,243 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/layout :: head('Admin Dashboard')}"></head>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="fr">
+<head th:replace="~{fragments/layout :: head('Gestion des Alumni')}"></head>
 <body>
 
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
 <div class="container">
     <div class="row mb-4">
-        <div class="col-md-12">
-            <h2>Admin Dashboard</h2>
-            <p class="text-muted">System overview and statistics</p>
+        <div class="col-md-8">
+            <h2><i class="bi bi-people"></i> Gestion des Alumni</h2>
+            <p class="text-muted">Liste complète des anciens étudiants</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createAlumniModal">
+                <i class="bi bi-plus-circle"></i> Ajouter un Alumni
+            </button>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-people-fill"></i> Total Users</h5>
-                    <h2 class="card-text" th:text="${userCount}">0</h2>
-                    <a href="/admin/users" class="btn btn-light btn-sm">Manage Users</a>
-                </div>
-            </div>
-        </div>
+    <!-- Messages -->
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+        <span th:if="${param.success[0] == 'created'}">Alumni créé avec succès !</span>
+        <span th:if="${param.success[0] == 'updated'}">Alumni mis à jour avec succès !</span>
+        <span th:if="${param.success[0] == 'deleted'}">Alumni supprimé avec succès !</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 
-        <div class="col-md-6 mb-4">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-list-check"></i> Total Tasks</h5>
-                    <h2 class="card-text" th:text="${taskCount}">0</h2>
-                    <a href="/tasks" class="btn btn-light btn-sm">View Tasks</a>
-                </div>
-            </div>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5><i class="bi bi-bar-chart"></i> Nombre d’Alumnis par Promotion</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="promoChart" height="100"></canvas>
         </div>
     </div>
 
+    <!-- Liste des alumni -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>Matricule</th>
+                        <th>Nom Complet</th>
+                        <th>Promotion</th>
+                        <th>Diplôme</th>
+                        <th>Année</th>
+                        <th>Situation</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="alumni : ${alumniList}">
+                        <td><strong th:text="${alumni.matricule}">ALU2020001</strong></td>
+                        <td th:text="${alumni.nomComplet}">Prénom Nom</td>
+                        <td><span class="badge bg-primary" th:text="${alumni.promotion}">2020</span></td>
+                        <td th:text="${alumni.diplomeSortie}">Master</td>
+                        <td th:text="${alumni.anneeSoutenance}">2020</td>
+                        <td>
+                                <span th:text="${alumni.situationProfessionnelle}"
+                                      th:class="${'badge ' +
+                                        (alumni.situationProfessionnelle == 'En poste' ? 'bg-success' :
+                                        (alumni.situationProfessionnelle == 'Entrepreneur' ? 'bg-warning text-dark' :
+                                        'bg-info'))}">
+                                    Situation
+                                </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a th:href="@{/admin/alumni-detail/{id}(id=${alumni.id})}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-warning"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#editModal' + ${alumni.id}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form th:action="@{/admin/alumni/{id}/delete(id=${alumni.id})}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Supprimer cet alumni ?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(alumniList)}">
+                        <td colspan="7" class="text-center text-muted">Aucun alumni trouvé.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Création -->
+<div class="modal fade" id="createAlumniModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Nouvel Alumni</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/admin/dashboard}" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Matricule <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="matricule" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Promotion <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="promotion" required placeholder="Ex: 2020">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="nom" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="prenom" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sexe</label>
+                            <select class="form-select" name="sexe">
+                                <option value="M">Masculin</option>
+                                <option value="F">Féminin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nationalité</label>
+                            <input type="text" class="form-control" name="nationalite" value="Sénégalaise">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Diplôme de Sortie</label>
+                            <input type="text" class="form-control" name="diplomeSortie" placeholder="Ex: Master en Informatique">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Année de Soutenance</label>
+                            <input type="number" class="form-control" name="anneeSoutenance" placeholder="2020">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Situation Professionnelle</label>
+                            <select class="form-select" name="situationProfessionnelle">
+                                <option value="En poste">En poste</option>
+                                <option value="Entrepreneur">Entrepreneur</option>
+                                <option value="En recherche">En recherche</option>
+                                <option value="En formation">En formation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Sujet de Mémoire</label>
+                            <textarea class="form-control" name="sujetMemoire" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Un compte sera créé automatiquement avec :
+                        <br><strong>Login :</strong> Matricule | <strong>Mot de passe :</strong> Promotion
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modals Édition (un par alumni) -->
+<div th:each="alumni : ${alumniList}" class="modal fade" th:id="'editModal' + ${alumni.id}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Modifier Alumni</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/admin/dashboard/{id}/edit(id=${alumni.id})}" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Matricule</label>
+                            <input type="text" class="form-control" name="matricule" th:value="${alumni.matricule}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Promotion</label>
+                            <input type="text" class="form-control" name="promotion" th:value="${alumni.promotion}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom</label>
+                            <input type="text" class="form-control" name="nom" th:value="${alumni.nom}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            <input type="text" class="form-control" name="prenom" th:value="${alumni.prenom}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sexe</label>
+                            <select class="form-select" name="sexe">
+                                <option value="M" th:selected="${alumni.sexe == 'M'}">Masculin</option>
+                                <option value="F" th:selected="${alumni.sexe == 'F'}">Féminin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nationalité</label>
+                            <input type="text" class="form-control" name="nationalite" th:value="${alumni.nationalite}">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Diplôme de Sortie</label>
+                            <input type="text" class="form-control" name="diplomeSortie" th:value="${alumni.diplomeSortie}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Année de Soutenance</label>
+                            <input type="number" class="form-control" name="anneeSoutenance" th:value="${alumni.anneeSoutenance}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Situation Professionnelle</label>
+                            <select class="form-select" name="situationProfessionnelle">
+                                <option value="En poste" th:selected="${alumni.situationProfessionnelle == 'En poste'}">En poste</option>
+                                <option value="Entrepreneur" th:selected="${alumni.situationProfessionnelle == 'Entrepreneur'}">Entrepreneur</option>
+                                <option value="En recherche" th:selected="${alumni.situationProfessionnelle == 'En recherche'}">En recherche</option>
+                                <option value="En formation" th:selected="${alumni.situationProfessionnelle == 'En formation'}">En formation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Sujet de Mémoire</label>
+                            <textarea class="form-control" name="sujetMemoire" rows="2" th:text="${alumni.sujetMemoire}"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">Mettre à jour</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div th:replace="~{fragments/layout :: scripts}"></div>
