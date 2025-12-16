@@ -20,7 +20,6 @@ public class DataInitializer {
                 userService.createUser("admin", "admin123", Role.ROLE_ADMIN);
                 // Créer quelques alumni de test
                 Client c1 = new Client();
-
                 // Créer quelques alumni de test
                 Alumni alumni1 = new Alumni();
                 alumni1.setMatricule("ALU2020001");
